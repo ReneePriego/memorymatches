@@ -4,26 +4,670 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tableau Memory Match</title>
-  <meta http-equiv="refresh" content="0; url=memorymatch.html">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8fbff; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
-    .card { background: white; border-radius: 16px; box-shadow: 0 14px 40px rgba(0,0,0,0.12); padding: 32px; max-width: 560px; width: 100%; text-align: center; }
-    h1 { color: #00A1E0; margin-bottom: 12px; }
-    p { color: #004B87; margin-bottom: 20px; line-height: 1.5; }
-    .btn { display: inline-block; padding: 14px 28px; background: #00A1E0; color: white; border-radius: 999px; font-weight: 700; text-decoration: none; box-shadow: 0 10px 24px rgba(0,161,224,0.35); transition: transform 0.2s ease, box-shadow 0.2s ease; }
-    .btn:hover { transform: translateY(-2px); box-shadow: 0 14px 30px rgba(0,161,224,0.45); }
-    .links { margin-top: 16px; font-size: 14px; color: #6b7785; }
-    .links a { color: #00A1E0; text-decoration: none; margin: 0 6px; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: white;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Landing Page Styles */
+    .landing-page {
+      background: white;
+      border-radius: 20px;
+      padding: 40px 40px 60px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      animation: slideIn 0.6s ease-out;
+      border: none;
+      width: 100%;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .cro-header {
+      font-size: 24px;
+      color: #00A1E0;
+      font-weight: 600;
+      margin-bottom: 10px;
+      letter-spacing: 1px;
+    }
+
+    .logo {
+      width: 160px;
+      height: auto;
+      display: block;
+      margin: 0 auto 16px;
+    }
+
+    .landing-hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .hero-content {
+      flex: 1 1 320px;
+      text-align: center;
+    }
+
+    .cta-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 10;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: #ffffff;
+      padding: 24px;
+      border-radius: 14px;
+      max-width: 360px;
+      width: 100%;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+
+    .modal-content h3 {
+      margin-bottom: 12px;
+      color: #004B87;
+    }
+
+    .modal-content input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      margin-bottom: 12px;
+      font-size: 16px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .btn-link {
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: 2px solid #00A1E0;
+      background: #e8f4fb;
+      color: #004B87;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      display: inline-block;
+      transition: all 0.2s ease;
+      min-width: 160px;
+      text-align: center;
+    }
+
+    .btn-link:hover {
+      background: #00A1E0;
+      color: #ffffff;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.08);
+      transform: translateY(-1px);
+    }
+
+    .game-title {
+      font-size: 48px;
+      color: #00A1E0;
+      font-weight: 800;
+      margin-bottom: 30px;
+      letter-spacing: 2px;
+    }
+
+    .game-description {
+      font-size: 16px;
+      color: black;
+      line-height: 1.8;
+      margin-bottom: 40px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .start-btn {
+      background: #00A1E0;
+      color: white;
+      border: none;
+      padding: 18px 60px;
+      font-size: 20px;
+      font-weight: 700;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 5px 15px rgba(0, 161, 224, 0.2);
+      letter-spacing: 1px;
+    }
+
+    .start-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 40px rgba(0, 161, 224, 0.5);
+    }
+
+    .start-btn:active {
+      transform: translateY(-1px);
+    }
+
+    /* Game Page Styles */
+    .game-page {
+      display: none;
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      animation: slideIn 0.6s ease-out;
+      max-width: 900px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .game-page.active {
+      display: block;
+    }
+
+    .game-header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .game-header h1 {
+      font-size: 36px;
+      color: #00A1E0;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 15px;
+      color: #004B87;
+      margin-bottom: 12px;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin-top: 10px;
+      font-size: 16px;
+      color: #666;
+    }
+
+    .memory-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .game-board {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 16px;
+      justify-content: center;
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 15px;
+      border: 2px solid #e0e0e0;
+    }
+
+    .card {
+      background-color: #ffffff;
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: all 0.3s ease;
+      user-select: none;
+      padding: 14px;
+      min-height: 100px;
+      text-align: center;
+      color: #00A1E0;
+    }
+
+    .card:hover:not(.matched) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 18px rgba(0, 161, 224, 0.2);
+      border-color: #00A1E0;
+    }
+
+    .card.flipped {
+      background-color: #ffffff;
+      color: #134252;
+      border-color: #00A1E0;
+    }
+
+    .card.matched {
+      opacity: 0.55;
+      cursor: default;
+      border-color: #28a745;
+      color: #28a745;
+      background: #f2fbf5;
+    }
+
+    .game-controls {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .game-btn {
+      padding: 12px 30px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-home {
+      background: #00A1E0;
+      color: white;
+    }
+
+    .btn-home:hover {
+      background: #0088B3;
+      transform: translateY(-2px);
+    }
+
+    .message {
+      font-size: 16px;
+      font-weight: 700;
+      color: #208080;
+      min-height: 22px;
+      text-align: center;
+      margin-top: 4px;
+    }
+
+    .win-screen {
+      display: none;
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      animation: slideIn 0.6s ease-out;
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    @media (max-width: 768px) {
+      .game-title {
+        font-size: 36px;
+      }
+
+      .game-board {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="card">
-    <div style="font-size:18px; font-weight:700; color:#00A1E0; letter-spacing:1px; margin-bottom:6px;">CRO Curiosity Cove</div>
-    <h1>Redirecting to Memory Match…</h1>
-    <p>You should land on the Memory Match game automatically. If not, click below.</p>
-    <a class="btn" href="memorymatch.html">Go to Memory Match</a>
-    <div class="links">Other pages (if present): <a href="wordpuzzle.html">Word Search</a> | <a href="crossword.html">Crossword</a> | <a href="filterorder.html">Filter Order</a></div>
+  <div class="container">
+    <!-- Landing Page -->
+    <div class="landing-page" id="landingPage">
+      <img class="logo" src="logo.png" alt="Logo">
+      <div class="landing-hero">
+        <div class="hero-content">
+          <div class="cro-header">CRO Curiosity Cove</div>
+          <h1 class="game-title">Memory Match</h1>
+          <p class="game-description">
+            Match Tableau concepts with their definitions to master key ideas in minutes.
+          </p>
+          <div class="cta-row">
+            <button class="start-btn" onclick="openNamePrompt()">Start Game</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Page -->
+    <div class="game-page" id="gamePage">
+      <div class="game-header">
+        <h1>Tableau Memory Match</h1>
+        <div class="subtitle">Flip two cards to find matching concept/definition pairs.</div>
+        <div class="stats">
+          <span>Moves: <strong id="moves">0</strong></span>
+          <span>Pairs: <strong id="pairs">0</strong>/<strong id="totalPairs">0</strong></span>
+        </div>
+      </div>
+
+      <div class="memory-wrapper">
+        <div class="game-board" id="gameBoard"></div>
+        <div class="message" id="message"></div>
+        <div class="game-controls">
+          <button class="game-btn btn-home" onclick="goHome()">Back to Home</button>
+          <a id="csvLink" class="btn-link" download="winners.csv" style="display:none;">Export winners CSV</a>
+          <button id="resetWinnersBtn" class="btn-link" style="display:none;" onclick="resetWinners()">Reset winners</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="win-screen" id="winScreen" style="display:none;">
+      <h1 style="color:#00A1E0; margin-bottom:12px;">Congratulations!</h1>
+      <p style="margin-bottom:12px; color:#004B87;">You found all the pairs.</p>
+      <p id="winDetails" style="margin-bottom:12px; color:#004B87;"></p>
+      <img src="champ.png" alt="Champion badge" style="width:260px; height:auto; margin:16px auto; display:block;">
+      <div class="game-controls" style="justify-content:center; margin-top:16px;">
+        <button class="game-btn btn-home" onclick="goHome()">Back to Home</button>
+      </div>
+    </div>
+
+    <div class="modal" id="nameModal">
+      <div class="modal-content">
+        <h3>Enter your name</h3>
+        <input type="text" id="playerNameInput" placeholder="Your name" />
+        <div class="modal-actions">
+          <button class="start-btn" style="padding:10px 20px; border-radius:10px;" onclick="confirmName()">Start</button>
+          <button class="game-btn btn-home" style="padding:10px 20px; border-radius:10px;" onclick="closeNamePrompt()">Cancel</button>
+        </div>
+      </div>
+    </div>
   </div>
+
+  <script>
+    const pairs = [
+      ['Dimension', 'Categorical Field'],
+      ['Measure', 'Numeric Field'],
+      ['Context Filter', 'Filter runs first'],
+      ['Parameter', 'User-controlled value'],
+      ['LOD', 'Fixed-level result']
+    ];
+
+    const ADMIN_USER = 'reneepriego';
+    let cards = [];
+    let flipped = [];
+    let matched = [];
+    let moves = 0;
+    let pairsFound = 0;
+    let playerName = '';
+    let winners = [];
+    let playedNames = new Set();
+
+    function buildCards() {
+      const cardPairs = [];
+      pairs.forEach(pair => {
+        cardPairs.push(pair[0], pair[1]);
+      });
+      cards = shuffleUntilValid(cardPairs);
+      document.getElementById('totalPairs').textContent = pairs.length;
+    }
+
+    function shuffleArray(arr) {
+      return [...arr].sort(() => Math.random() - 0.5);
+    }
+
+    function shuffleUntilValid(cardPairs) {
+      let attempt = 0;
+      while (attempt < 1000) {
+        const shuffled = shuffleArray(cardPairs);
+        if (!hasAdjacentPair(shuffled)) return shuffled;
+        attempt++;
+      }
+      return shuffleArray(cardPairs);
+    }
+
+    function hasAdjacentPair(list) {
+      return pairs.some(pair => {
+        const first = list.indexOf(pair[0]);
+        const second = list.indexOf(pair[1]);
+        return Math.abs(first - second) === 1;
+      });
+    }
+
+    function initGame() {
+      buildCards();
+      flipped = [];
+      matched = [];
+      moves = 0;
+      pairsFound = 0;
+      document.getElementById('message').textContent = '';
+      updateStats();
+      renderBoard();
+    }
+
+    function renderBoard() {
+      const board = document.getElementById('gameBoard');
+      board.innerHTML = '';
+
+      cards.forEach((text, index) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.textContent = matched.includes(index) || flipped.includes(index) ? text : '?';
+
+        if (matched.includes(index)) {
+          card.classList.add('matched');
+        }
+        if (flipped.includes(index)) {
+          card.classList.add('flipped');
+        }
+
+        card.onclick = () => flipCard(index);
+        board.appendChild(card);
+      });
+    }
+
+    function flipCard(index) {
+      if (flipped.includes(index) || matched.includes(index) || flipped.length >= 2) {
+        return;
+      }
+
+      flipped.push(index);
+      renderBoard();
+
+      if (flipped.length === 2) {
+        moves++;
+        updateStats();
+        setTimeout(checkMatch, 500);
+      }
+    }
+
+    function checkMatch() {
+      const [first, second] = flipped;
+      const firstText = cards[first];
+      const secondText = cards[second];
+
+      const isMatch = pairs.some(pair =>
+        (firstText === pair[0] && secondText === pair[1]) ||
+        (firstText === pair[1] && secondText === pair[0])
+      );
+
+      if (isMatch) {
+        matched.push(first, second);
+        pairsFound++;
+        document.getElementById('message').textContent = '✓ Match found!';
+        if (pairsFound === pairs.length) {
+          setTimeout(showWinScreen, 400);
+        }
+      } else {
+        document.getElementById('message').textContent = '✗ No match';
+      }
+
+      flipped = [];
+      renderBoard();
+    }
+
+    function updateStats() {
+      document.getElementById('moves').textContent = moves;
+      document.getElementById('pairs').textContent = pairsFound;
+    }
+
+    function showWinScreen() {
+      document.getElementById('gamePage').classList.remove('active');
+      document.getElementById('winDetails').textContent = `You finished in ${moves} moves.`;
+      document.getElementById('winScreen').style.display = 'block';
+      recordWinner();
+    }
+
+    function startGame() {
+      document.getElementById('landingPage').style.display = 'none';
+      document.getElementById('winScreen').style.display = 'none';
+      document.getElementById('gamePage').classList.add('active');
+      initGame();
+    }
+
+    function goHome() {
+      document.getElementById('gamePage').classList.remove('active');
+      document.getElementById('landingPage').style.display = 'block';
+      document.getElementById('winScreen').style.display = 'none';
+      document.getElementById('message').textContent = '';
+    }
+
+    function openNamePrompt() {
+      document.getElementById('nameModal').classList.add('active');
+      document.getElementById('playerNameInput').value = playerName || '';
+      setTimeout(() => document.getElementById('playerNameInput').focus(), 0);
+    }
+
+    function closeNamePrompt() {
+      document.getElementById('nameModal').classList.remove('active');
+    }
+
+    function confirmName() {
+      const nameVal = document.getElementById('playerNameInput').value.trim();
+      if (!nameVal) return;
+      const normalized = nameVal.toLowerCase();
+      const isAdmin = normalized === ADMIN_USER.toLowerCase();
+      if (!isAdmin && playedNames.has(normalized)) {
+        alert('This user already played. Please use a different name.');
+        return;
+      }
+      playerName = nameVal;
+      if (!isAdmin) {
+        playedNames.add(normalized);
+        savePlayedNames();
+      }
+      closeNamePrompt();
+      startGame();
+      updateAdminVisibility();
+    }
+
+    function recordWinner() {
+      if (!playerName) return;
+      const timestamp = new Date().toISOString();
+      winners.push({ name: playerName, moves, timestamp });
+      saveWinners();
+      updateCsvLink();
+    }
+
+    function saveWinners() {
+      localStorage.setItem('memoryWinners', JSON.stringify(winners));
+    }
+
+    function loadWinners() {
+      const data = localStorage.getItem('memoryWinners');
+      if (data) {
+        try {
+          winners = JSON.parse(data);
+        } catch (e) {
+          winners = [];
+        }
+      }
+    }
+
+    function savePlayedNames() {
+      localStorage.setItem('memoryPlayed', JSON.stringify(Array.from(playedNames)));
+    }
+
+    function loadPlayedNames() {
+      const data = localStorage.getItem('memoryPlayed');
+      if (data) {
+        try {
+          playedNames = new Set(JSON.parse(data));
+        } catch (e) {
+          playedNames = new Set();
+        }
+      }
+    }
+
+    function updateAdminVisibility() {
+      const link = document.getElementById('csvLink');
+      const resetBtn = document.getElementById('resetWinnersBtn');
+      if (!link || !resetBtn) return;
+      const isAdmin = (playerName && playerName.toLowerCase() === ADMIN_USER.toLowerCase());
+      link.style.display = isAdmin ? 'inline-block' : 'none';
+      resetBtn.style.display = isAdmin ? 'inline-block' : 'none';
+    }
+
+    function updateCsvLink() {
+      const link = document.getElementById('csvLink');
+      if (!link) return;
+      const header = 'Name,Moves,Timestamp\n';
+      const rows = winners.map(w => `${w.name},${w.moves},${w.timestamp}`).join('\n');
+      const csv = header + rows;
+      link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+    }
+
+    function resetWinners() {
+      winners = [];
+      saveWinners();
+      updateCsvLink();
+      playedNames = new Set();
+      savePlayedNames();
+      alert('Winners and play history reset.');
+    }
+
+    function initStorage() {
+      loadWinners();
+      loadPlayedNames();
+      updateCsvLink();
+    }
+
+    initStorage();
+  </script>
 </body>
 </html>
