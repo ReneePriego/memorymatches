@@ -245,16 +245,45 @@
       gap: 16px;
     }
 
+    .board-with-labels {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .row-labels {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .row-label {
+      background: #e8f4fb;
+      color: #004B87;
+      padding: 6px 10px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 12px;
+      border: 1px solid #c8e0ee;
+      white-space: nowrap;
+    }
+
     .game-board {
       width: 100%;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      grid-template-columns: repeat(var(--pair-count, 5), minmax(140px, 1fr));
+      grid-template-rows: repeat(2, 1fr);
+      grid-auto-rows: 1fr;
       gap: 16px;
       justify-content: center;
       background: #f8f9fa;
       padding: 20px;
       border-radius: 15px;
       border: 2px solid #e0e0e0;
+      overflow-x: auto;
     }
 
     .card {
@@ -326,7 +355,7 @@
     .message {
       font-size: 16px;
       font-weight: 700;
-      color: #208080;
+      color: #00A1E0;
       min-height: 22px;
       text-align: center;
       margin-top: 4px;
@@ -351,7 +380,7 @@
       }
 
       .game-board {
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        grid-template-columns: repeat(var(--pair-count, 5), minmax(120px, 1fr));
       }
     }
   </style>
@@ -383,11 +412,18 @@
         <div class="stats">
           <span>Moves: <strong id="moves">0</strong></span>
           <span>Pairs: <strong id="pairs">0</strong>/<strong id="totalPairs">0</strong></span>
+          <span>Time: <strong id="timer">0:00</strong></span>
         </div>
       </div>
 
       <div class="memory-wrapper">
-        <div class="game-board" id="gameBoard"></div>
+        <div class="board-with-labels">
+          <div class="row-labels">
+            <div class="row-label">Top row: Terms</div>
+            <div class="row-label">Bottom row: Definitions</div>
+          </div>
+          <div class="game-board" id="gameBoard"></div>
+        </div>
         <div class="message" id="message"></div>
         <div class="game-controls">
           <button class="game-btn btn-home" onclick="goHome()">Back to Home</button>
@@ -436,37 +472,73 @@
     let pairsFound = 0;
     let playerName = '';
     let winners = [];
-    let playedNames = new Set();
-
-    function buildCards() {
-      const cardPairs = [];
-      pairs.forEach(pair => {
-        cardPairs.push(pair[0], pair[1]);
-      });
-      cards = shuffleUntilValid(cardPairs);
-      document.getElementById('totalPairs').textContent = pairs.length;
-    }
+    let timerSeconds = 0;
+    let timerInterval = null;
+    let gameLocked = false;
 
     function shuffleArray(arr) {
       return [...arr].sort(() => Math.random() - 0.5);
     }
 
-    function shuffleUntilValid(cardPairs) {
+    function shuffleDefinitions(pairList) {
+      const definitions = pairList.map(pair => pair[1]);
+      if (definitions.length <= 1) return definitions;
+
+      let shuffled = [];
       let attempt = 0;
-      while (attempt < 1000) {
-        const shuffled = shuffleArray(cardPairs);
-        if (!hasAdjacentPair(shuffled)) return shuffled;
+      do {
+        shuffled = shuffleArray(definitions);
         attempt++;
-      }
-      return shuffleArray(cardPairs);
+        if (attempt > 1000) {
+          shuffled = [...definitions.slice(1), definitions[0]];
+          break;
+        }
+      } while (shuffled.some((def, idx) => def === definitions[idx]));
+
+      return shuffled;
     }
 
-    function hasAdjacentPair(list) {
-      return pairs.some(pair => {
-        const first = list.indexOf(pair[0]);
-        const second = list.indexOf(pair[1]);
-        return Math.abs(first - second) === 1;
-      });
+    function buildCards() {
+      const terms = pairs.map(pair => pair[0]);
+      const definitions = shuffleDefinitions(pairs);
+      cards = [...terms, ...definitions];
+      document.getElementById('totalPairs').textContent = pairs.length;
+      const board = document.getElementById('gameBoard');
+      if (board) {
+        board.style.setProperty('--pair-count', pairs.length);
+      }
+    }
+
+    function formatTime(totalSeconds) {
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      return `${minutes}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    function updateTimerDisplay() {
+      const el = document.getElementById('timer');
+      if (el) el.textContent = formatTime(timerSeconds);
+    }
+
+    function stopTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+
+    function resetTimer() {
+      stopTimer();
+      timerSeconds = 0;
+      updateTimerDisplay();
+    }
+
+    function startTimer() {
+      resetTimer();
+      timerInterval = setInterval(() => {
+        timerSeconds++;
+        updateTimerDisplay();
+      }, 1000);
     }
 
     function initGame() {
@@ -475,7 +547,9 @@
       matched = [];
       moves = 0;
       pairsFound = 0;
+      gameLocked = false;
       document.getElementById('message').textContent = '';
+      startTimer();
       updateStats();
       renderBoard();
     }
@@ -502,7 +576,7 @@
     }
 
     function flipCard(index) {
-      if (flipped.includes(index) || matched.includes(index) || flipped.length >= 2) {
+      if (gameLocked || flipped.includes(index) || matched.includes(index) || flipped.length >= 2) {
         return;
       }
 
@@ -530,15 +604,22 @@
         matched.push(first, second);
         pairsFound++;
         document.getElementById('message').textContent = '✓ Match found!';
-        if (pairsFound === pairs.length) {
-          setTimeout(showWinScreen, 400);
-        }
       } else {
         document.getElementById('message').textContent = '✗ No match';
       }
 
       flipped = [];
       renderBoard();
+
+      if (pairsFound === pairs.length) {
+        gameLocked = true;
+        stopTimer();
+        document.getElementById('message').textContent = 'All pairs found!';
+        setTimeout(() => {
+          showWinScreen();
+          gameLocked = false;
+        }, 10000);
+      }
     }
 
     function updateStats() {
@@ -547,8 +628,9 @@
     }
 
     function showWinScreen() {
+      stopTimer();
       document.getElementById('gamePage').classList.remove('active');
-      document.getElementById('winDetails').textContent = `You finished in ${moves} moves.`;
+      document.getElementById('winDetails').textContent = `You finished in ${moves} moves and ${formatTime(timerSeconds)}.`;
       document.getElementById('winScreen').style.display = 'block';
       recordWinner();
     }
@@ -561,6 +643,9 @@
     }
 
     function goHome() {
+      stopTimer();
+      resetTimer();
+      gameLocked = false;
       document.getElementById('gamePage').classList.remove('active');
       document.getElementById('landingPage').style.display = 'block';
       document.getElementById('winScreen').style.display = 'none';
@@ -582,15 +667,7 @@
       if (!nameVal) return;
       const normalized = nameVal.toLowerCase();
       const isAdmin = normalized === ADMIN_USER.toLowerCase();
-      if (!isAdmin && playedNames.has(normalized)) {
-        alert('This user already played. Please use a different name.');
-        return;
-      }
       playerName = nameVal;
-      if (!isAdmin) {
-        playedNames.add(normalized);
-        savePlayedNames();
-      }
       closeNamePrompt();
       startGame();
       updateAdminVisibility();
@@ -598,6 +675,13 @@
 
     function recordWinner() {
       if (!playerName) return;
+      const normalized = playerName.trim().toLowerCase();
+      const alreadyRecorded = winners.some(
+        w => (w.name || '').trim().toLowerCase() === normalized
+      );
+      if (alreadyRecorded) {
+        return;
+      }
       const timestamp = new Date().toISOString();
       winners.push({ name: playerName, moves, timestamp });
       saveWinners();
@@ -615,21 +699,6 @@
           winners = JSON.parse(data);
         } catch (e) {
           winners = [];
-        }
-      }
-    }
-
-    function savePlayedNames() {
-      localStorage.setItem('memoryPlayed', JSON.stringify(Array.from(playedNames)));
-    }
-
-    function loadPlayedNames() {
-      const data = localStorage.getItem('memoryPlayed');
-      if (data) {
-        try {
-          playedNames = new Set(JSON.parse(data));
-        } catch (e) {
-          playedNames = new Set();
         }
       }
     }
@@ -656,17 +725,15 @@
       winners = [];
       saveWinners();
       updateCsvLink();
-      playedNames = new Set();
-      savePlayedNames();
       alert('Winners and play history reset.');
     }
 
     function initStorage() {
       loadWinners();
-      loadPlayedNames();
       updateCsvLink();
     }
 
+    updateTimerDisplay();
     initStorage();
   </script>
 </body>

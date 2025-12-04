@@ -326,7 +326,7 @@
     .message {
       font-size: 16px;
       font-weight: 700;
-      color: #208080;
+      color: #00A1E0;
       min-height: 22px;
       text-align: center;
       margin-top: 4px;
@@ -383,6 +383,7 @@
         <div class="stats">
           <span>Moves: <strong id="moves">0</strong></span>
           <span>Pairs: <strong id="pairs">0</strong>/<strong id="totalPairs">0</strong></span>
+          <span>Time: <strong id="timer">0:00</strong></span>
         </div>
       </div>
 
@@ -436,7 +437,9 @@
     let pairsFound = 0;
     let playerName = '';
     let winners = [];
-    let playedNames = new Set();
+    let timerSeconds = 0;
+    let timerInterval = null;
+    let gameLocked = false;
 
     function buildCards() {
       const cardPairs = [];
@@ -469,13 +472,47 @@
       });
     }
 
+    function formatTime(totalSeconds) {
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      return `${minutes}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    function updateTimerDisplay() {
+      const el = document.getElementById('timer');
+      if (el) el.textContent = formatTime(timerSeconds);
+    }
+
+    function stopTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+
+    function resetTimer() {
+      stopTimer();
+      timerSeconds = 0;
+      updateTimerDisplay();
+    }
+
+    function startTimer() {
+      resetTimer();
+      timerInterval = setInterval(() => {
+        timerSeconds++;
+        updateTimerDisplay();
+      }, 1000);
+    }
+
     function initGame() {
       buildCards();
       flipped = [];
       matched = [];
       moves = 0;
       pairsFound = 0;
+      gameLocked = false;
       document.getElementById('message').textContent = '';
+      startTimer();
       updateStats();
       renderBoard();
     }
@@ -502,7 +539,7 @@
     }
 
     function flipCard(index) {
-      if (flipped.includes(index) || matched.includes(index) || flipped.length >= 2) {
+      if (gameLocked || flipped.includes(index) || matched.includes(index) || flipped.length >= 2) {
         return;
       }
 
@@ -530,15 +567,22 @@
         matched.push(first, second);
         pairsFound++;
         document.getElementById('message').textContent = '✓ Match found!';
-        if (pairsFound === pairs.length) {
-          setTimeout(showWinScreen, 400);
-        }
       } else {
         document.getElementById('message').textContent = '✗ No match';
       }
 
       flipped = [];
       renderBoard();
+
+      if (pairsFound === pairs.length) {
+        gameLocked = true;
+        stopTimer();
+        document.getElementById('message').textContent = 'All pairs found!';
+        setTimeout(() => {
+          showWinScreen();
+          gameLocked = false;
+        }, 10000);
+      }
     }
 
     function updateStats() {
@@ -547,8 +591,9 @@
     }
 
     function showWinScreen() {
+      stopTimer();
       document.getElementById('gamePage').classList.remove('active');
-      document.getElementById('winDetails').textContent = `You finished in ${moves} moves.`;
+      document.getElementById('winDetails').textContent = `You finished in ${moves} moves and ${formatTime(timerSeconds)}.`;
       document.getElementById('winScreen').style.display = 'block';
       recordWinner();
     }
@@ -561,6 +606,9 @@
     }
 
     function goHome() {
+      stopTimer();
+      resetTimer();
+      gameLocked = false;
       document.getElementById('gamePage').classList.remove('active');
       document.getElementById('landingPage').style.display = 'block';
       document.getElementById('winScreen').style.display = 'none';
@@ -582,15 +630,7 @@
       if (!nameVal) return;
       const normalized = nameVal.toLowerCase();
       const isAdmin = normalized === ADMIN_USER.toLowerCase();
-      if (!isAdmin && playedNames.has(normalized)) {
-        alert('This user already played. Please use a different name.');
-        return;
-      }
       playerName = nameVal;
-      if (!isAdmin) {
-        playedNames.add(normalized);
-        savePlayedNames();
-      }
       closeNamePrompt();
       startGame();
       updateAdminVisibility();
@@ -598,6 +638,13 @@
 
     function recordWinner() {
       if (!playerName) return;
+      const normalized = playerName.trim().toLowerCase();
+      const alreadyRecorded = winners.some(
+        w => (w.name || '').trim().toLowerCase() === normalized
+      );
+      if (alreadyRecorded) {
+        return;
+      }
       const timestamp = new Date().toISOString();
       winners.push({ name: playerName, moves, timestamp });
       saveWinners();
@@ -615,21 +662,6 @@
           winners = JSON.parse(data);
         } catch (e) {
           winners = [];
-        }
-      }
-    }
-
-    function savePlayedNames() {
-      localStorage.setItem('memoryPlayed', JSON.stringify(Array.from(playedNames)));
-    }
-
-    function loadPlayedNames() {
-      const data = localStorage.getItem('memoryPlayed');
-      if (data) {
-        try {
-          playedNames = new Set(JSON.parse(data));
-        } catch (e) {
-          playedNames = new Set();
         }
       }
     }
@@ -656,17 +688,15 @@
       winners = [];
       saveWinners();
       updateCsvLink();
-      playedNames = new Set();
-      savePlayedNames();
       alert('Winners and play history reset.');
     }
 
     function initStorage() {
       loadWinners();
-      loadPlayedNames();
       updateCsvLink();
     }
 
+    updateTimerDisplay();
     initStorage();
   </script>
 </body>
